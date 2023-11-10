@@ -48,7 +48,12 @@ func generateBoardHandler(w http.ResponseWriter, r *http.Request) {
 
 	board, ok := sudoku.GenerateBoard(difficulty, seed)
 	if ok {
-		res, err := json.Marshal(board)
+		res, err := json.Marshal(struct {
+			Board string `json:"board"`
+		}{
+			Board: board,
+		})
+
 		if err != nil {
 			utils.ErrorLog.Printf("Failed to encode the Board into JSON - %s\n", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
