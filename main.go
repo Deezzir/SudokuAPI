@@ -143,7 +143,6 @@ func getKeyFromEnv() string {
 func main() {
 	if err := godotenv.Load(); err != nil {
 		utils.WarningLog.Println("Error loading .env file")
-		return
 	}
 	apiKey := getKeyFromEnv()
 	utils.InfoLog.Println("Using API key: " + apiKey)
