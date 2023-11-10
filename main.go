@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/rs/cors"
 )
 
 const server_port = "0.0.0.0:80"
@@ -155,12 +154,7 @@ func main() {
 
 	r := mux.NewRouter()
 	registerAPIRoutes(r)
-	handler := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-API-Key", "X-Requested-With", "Origin", "Authorization"},
-	}).Handler(r)
-	securityMiddleware := apiKeyMiddleware(apiKey, handler)
+	securityMiddleware := apiKeyMiddleware(apiKey, r)
 
 	utils.InfoLog.Println("Starting server at: " + server_port)
 	if err := http.ListenAndServe(server_port, securityMiddleware); err != nil {
