@@ -15,7 +15,7 @@ import (
 var server_port = "0.0.0.0:6969"
 
 func generateBoardHandler(w http.ResponseWriter, r *http.Request) {
-	utils.InfoLog.Println("Received a request to genearate board ('GET':'/generate')")
+	utils.InfoLog.Println("Received a request to genearate board ('GET':'/sudoku/generate')")
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -49,14 +49,14 @@ func generateBoardHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Failed to encode the Board into JSON\n"))
 	} else {
-		utils.InfoLog.Println("Sent the generated Board ('GET':'/generate')")
+		utils.InfoLog.Println("Sent the generated Board ('GET':'/sudoku/generate')")
 		w.WriteHeader(http.StatusOK)
 		w.Write(res)
 	}
 }
 
 func solveBoardHandler(w http.ResponseWriter, r *http.Request) {
-	utils.InfoLog.Println("Received a request to solve Board ('GET':'/solve')")
+	utils.InfoLog.Println("Received a request to solve Board ('GET':'/sudoku/solve')")
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -76,7 +76,7 @@ func solveBoardHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Failed to encode the Board Solution into JSON\n"))
 	} else {
-		utils.InfoLog.Println("Sent the solved Board ('GET':'/solve')")
+		utils.InfoLog.Println("Sent the solved Board ('GET':'/sudoku/solve')")
 		w.WriteHeader(http.StatusOK)
 		w.Write(res)
 	}
@@ -90,8 +90,8 @@ func notFoundHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 var registerAPIRoutes = func(router *mux.Router) {
-	router.HandleFunc("/generate", generateBoardHandler).Methods("GET")
-	router.HandleFunc("/solve", solveBoardHandler).Methods("GET")
+	router.HandleFunc("/sudoku/generate", generateBoardHandler).Methods("GET")
+	router.HandleFunc("/sudoku/solve", solveBoardHandler).Methods("GET")
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 }
 
