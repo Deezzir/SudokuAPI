@@ -193,9 +193,7 @@ func GenerateBoard(difficulty string, seed string) (string, bool) {
 		board = [9][9]int{}
 		ok = fillDiagonal(&board, rng) && fillRemaining(&board, rng) && isValidBoard(board)
 	}
-
 	makeHoles(&board, difficulty, rng)
-	PrintBoard(board)
 
 	return convertBoardString(board), ok
 }
