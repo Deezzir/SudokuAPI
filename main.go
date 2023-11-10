@@ -14,7 +14,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const server_port = "0.0.0.0:6969"
+const server_port = "0.0.0.0:80"
 const apiKeyHeader = "X-API-Key"
 
 func generateBoardHandler(w http.ResponseWriter, r *http.Request) {
