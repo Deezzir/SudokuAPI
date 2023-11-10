@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
+	"sudoku-api/pkg/utils"
 )
 
 var Difficulties = []string{"easy", "medium", "hard"}
@@ -141,17 +142,19 @@ func fillRemaining(board *[9][9]int, rng *rand.Rand) bool {
 func makeHoles(board *[9][9]int, difficulty string, rng *rand.Rand) {
 	var totalHoles int
 
+	attempts := 15
+
 	switch difficulty {
 	case "easy":
 		totalHoles = 35
 	case "medium":
 		totalHoles = 45
 	case "hard":
-		totalHoles = 55
+		totalHoles = 60
 	}
 
 	holesCreated := 0
-	for holesCreated < totalHoles {
+	for holesCreated < totalHoles && attempts > 0 {
 		row := rng.Intn(gridSize)
 		col := rng.Intn(gridSize)
 
@@ -168,9 +171,11 @@ func makeHoles(board *[9][9]int, difficulty string, rng *rand.Rand) {
 			if counter != 1 {
 				board[row][col] = backup
 				holesCreated--
+				attempts--
 			}
 		}
 	}
+	utils.InfoLog.Printf("Difficulty: %s, Holes created: %d, Attempts: %d\n", difficulty, holesCreated, attempts)
 }
 
 func GenerateBoard(difficulty string, seed string) (string, bool) {
