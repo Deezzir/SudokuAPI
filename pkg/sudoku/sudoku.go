@@ -142,7 +142,7 @@ func fillRemaining(board *[9][9]int, rng *rand.Rand) bool {
 func makeHoles(board *[9][9]int, difficulty string, rng *rand.Rand) {
 	var totalHoles int
 
-	attempts := 15
+	totalAttempts := 20
 
 	switch difficulty {
 	case "easy":
@@ -154,7 +154,9 @@ func makeHoles(board *[9][9]int, difficulty string, rng *rand.Rand) {
 	}
 
 	holesCreated := 0
-	for holesCreated < totalHoles && attempts > 0 {
+	attempts := 0
+
+	for holesCreated < totalHoles && attempts < totalAttempts {
 		row := rng.Intn(gridSize)
 		col := rng.Intn(gridSize)
 
@@ -171,7 +173,7 @@ func makeHoles(board *[9][9]int, difficulty string, rng *rand.Rand) {
 			if counter != 1 {
 				board[row][col] = backup
 				holesCreated--
-				attempts--
+				attempts++
 			}
 		}
 	}
@@ -275,6 +277,7 @@ func SolveBoard(board string) (string, int) {
 	solution := convertBoardArray(board)
 	counter := 0
 	solver(&solution, &counter)
+	utils.InfoLog.Printf("Solutions found: %d\n", counter)
 	return convertBoardString(solution), counter
 }
 
