@@ -143,11 +143,11 @@ func makeHoles(board *[9][9]int, difficulty string, rng *rand.Rand) {
 
 	switch difficulty {
 	case "easy":
-		totalHoles = 25
+		totalHoles = 35
 	case "medium":
-		totalHoles = 40
+		totalHoles = 45
 	case "hard":
-		totalHoles = 50
+		totalHoles = 60
 	}
 
 	holesCreated := 0
