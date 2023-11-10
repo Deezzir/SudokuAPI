@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sudoku-api/pkg/sudoku"
@@ -10,9 +11,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
-var server_port = "0.0.0.0:6969"
+const server_port = "0.0.0.0:80"
+const apiKeyHeader = "X-API-Key"
 
 func generateBoardHandler(w http.ResponseWriter, r *http.Request) {
 	utils.InfoLog.Println("Received a request to genearate board ('GET':'/sudoku/generate')")
@@ -42,16 +45,22 @@ func generateBoardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	board := sudoku.GenerateBoard(difficulty, seed)
-	res, err := json.Marshal(board)
-	if err != nil {
-		utils.ErrorLog.Printf("Failed to encode the Board into JSON - %s\n", err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Failed to encode the Board into JSON\n"))
+	board, ok := sudoku.GenerateBoard(difficulty, seed)
+	if ok {
+		res, err := json.Marshal(board)
+		if err != nil {
+			utils.ErrorLog.Printf("Failed to encode the Board into JSON - %s\n", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Failed to encode the Board into JSON\n"))
+		} else {
+			utils.InfoLog.Println("Sent the generated Board ('GET':'/sudoku/generate')")
+			w.WriteHeader(http.StatusOK)
+			w.Write(res)
+		}
 	} else {
-		utils.InfoLog.Println("Sent the generated Board ('GET':'/sudoku/generate')")
-		w.WriteHeader(http.StatusOK)
-		w.Write(res)
+		utils.WarningLog.Println("Failed to generate Board with difficulty: '" + difficulty + "' and seed: '" + seed + "'")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Failed to generate Board with difficulty: '" + difficulty + "' and seed: '" + seed + "'\n"))
 	}
 }
 
@@ -62,15 +71,30 @@ func solveBoardHandler(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
 	board := query.Get("board")
-	if !sudoku.IsValidBoard(board) {
-		utils.WarningLog.Println("Invalid Board requested: '" + board + "'")
+	if board == "" {
+		utils.WarningLog.Println("No Board provided")
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid Board requested: '" + board + "'\n"))
+		w.Write([]byte("No Board provided\n"))
+		return
+	}
+	if !sudoku.IsValidBoard(board) {
+		utils.WarningLog.Println("Invalid Board provided: '" + board + "'")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid Board provided: '" + board + "'\n"))
 		return
 	}
 
-	solution := sudoku.SolveBoard(board)
-	res, err := json.Marshal(solution)
+	solution, counter := sudoku.SolveBoard(board)
+	result := sudoku.CounterToMsg(counter)
+
+	res, err := json.Marshal(struct {
+		Solution string `json:"solution"`
+		Result   string `json:"result"`
+	}{
+		Solution: solution,
+		Result:   result,
+	})
+
 	if err != nil {
 		utils.ErrorLog.Printf("Failed to encode the Board Solution into JSON - %s\n", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -95,13 +119,41 @@ var registerAPIRoutes = func(router *mux.Router) {
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 }
 
+func apiKeyMiddleware(apiKey string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key := r.Header.Get(apiKeyHeader)
+		if key != apiKey {
+			http.Error(w, "Invalid API key", http.StatusUnauthorized)
+			utils.WarningLog.Println("Received Invalid API key")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func getKeyFromEnv() string {
+	if value, ok := os.LookupEnv("API_KEY"); !ok {
+		utils.ErrorLog.Fatalln("API_KEY environment variable not set, crashing")
+		return "unreachable"
+	} else {
+		return value
+	}
+}
+
 func main() {
+	if err := godotenv.Load(); err != nil {
+		utils.WarningLog.Println("Error loading .env file")
+		return
+	}
+	apiKey := getKeyFromEnv()
+	utils.InfoLog.Println("Using API key: " + apiKey)
+
 	r := mux.NewRouter()
 	registerAPIRoutes(r)
-	http.Handle("/", r)
+	securityMiddleware := apiKeyMiddleware(apiKey, r)
 
 	utils.InfoLog.Println("Starting server at: " + server_port)
-	if err := http.ListenAndServe(server_port, r); err != nil {
+	if err := http.ListenAndServe(server_port, securityMiddleware); err != nil {
 		utils.ErrorLog.Fatalln(err)
 	}
 }
