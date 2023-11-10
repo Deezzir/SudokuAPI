@@ -157,8 +157,8 @@ func main() {
 	registerAPIRoutes(r)
 	handler := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET"},
-		AllowedHeaders: []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-API-Key"},
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-API-Key", "X-Requested-With", "Origin", "Authorization"},
 	}).Handler(r)
 	securityMiddleware := apiKeyMiddleware(apiKey, handler)
 
