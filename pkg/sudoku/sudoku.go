@@ -13,6 +13,7 @@ var gridValues = [9]int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 const gridSize = 9
 const boardSize = gridSize * gridSize
+const TotalAttempts = 20
 
 func PrintBoard(board [9][9]int) {
 	for row := 0; row < gridSize; row++ {
@@ -139,10 +140,8 @@ func fillRemaining(board *[9][9]int, rng *rand.Rand) bool {
 	return true
 }
 
-func makeHoles(board *[9][9]int, difficulty string, rng *rand.Rand) {
+func makeHoles(board *[9][9]int, difficulty string, totalAttempts int, rng *rand.Rand) {
 	var totalHoles int
-
-	totalAttempts := 20
 
 	switch difficulty {
 	case "easy":
@@ -180,7 +179,7 @@ func makeHoles(board *[9][9]int, difficulty string, rng *rand.Rand) {
 	utils.InfoLog.Printf("Difficulty: %s, Holes created: %d, Attempts: %d\n", difficulty, holesCreated, attempts)
 }
 
-func GenerateBoard(difficulty string, seed string) (string, bool) {
+func GenerateBoard(difficulty string, seed string, attempts int) (string, bool) {
 	var board [9][9]int
 
 	seedNumber, err := strconv.Atoi(seed)
@@ -195,7 +194,7 @@ func GenerateBoard(difficulty string, seed string) (string, bool) {
 		board = [9][9]int{}
 		ok = fillDiagonal(&board, rng) && fillRemaining(&board, rng) && isValidBoard(board)
 	}
-	makeHoles(&board, difficulty, rng)
+	makeHoles(&board, difficulty, attempts, rng)
 
 	return convertBoardString(board), ok
 }

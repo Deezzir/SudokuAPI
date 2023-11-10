@@ -17,6 +17,8 @@ import (
 const server_port = "0.0.0.0:80"
 const apiKeyHeader = "X-API-Key"
 
+var attempts = 0
+
 func generateBoardHandler(w http.ResponseWriter, r *http.Request) {
 	utils.InfoLog.Println("Received a request to genearate board ('GET':'/sudoku/generate')")
 
@@ -45,7 +47,7 @@ func generateBoardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	board, ok := sudoku.GenerateBoard(difficulty, seed)
+	board, ok := sudoku.GenerateBoard(difficulty, seed, attempts)
 	if ok {
 		res, err := json.Marshal(struct {
 			Board string `json:"board"`
@@ -136,28 +138,46 @@ func apiKeyMiddleware(apiKey string, next http.Handler) http.Handler {
 	})
 }
 
-func getKeyFromEnv() string {
+func getConfsFromEnv() (apiKey string, port string, totalAttempts int) {
 	if value, ok := os.LookupEnv("API_KEY"); !ok {
-		utils.ErrorLog.Fatalln("API_KEY environment variable not set, crashing")
-		return "unreachable"
+		panic("API_KEY environment variable not set, crashing")
 	} else {
-		return value
+		apiKey = value
 	}
+
+	if value, ok := os.LookupEnv("PORT"); !ok {
+		port = server_port
+	} else {
+		port = value
+	}
+
+	totalAttempts = sudoku.TotalAttempts
+	if value, ok := os.LookupEnv("TOTAL_ATTEMPTS"); ok {
+		value, err := strconv.Atoi(value)
+		if err == nil {
+			totalAttempts = value
+		}
+	}
+
+	return apiKey, port, totalAttempts
 }
 
 func main() {
 	if err := godotenv.Load(); err != nil {
 		utils.WarningLog.Println("Error loading .env file")
 	}
-	apiKey := getKeyFromEnv()
+	apiKey, port, totalAttempts := getConfsFromEnv()
+
+	utils.InfoLog.Println("Using total attempts: " + strconv.Itoa(totalAttempts))
 	utils.InfoLog.Println("Using API key: " + apiKey)
+	attempts = totalAttempts
 
 	r := mux.NewRouter()
 	registerAPIRoutes(r)
 	securityMiddleware := apiKeyMiddleware(apiKey, r)
 
-	utils.InfoLog.Println("Starting server at: " + server_port)
-	if err := http.ListenAndServe(server_port, securityMiddleware); err != nil {
+	utils.InfoLog.Println("Starting server at: " + port)
+	if err := http.ListenAndServe(port, securityMiddleware); err != nil {
 		utils.ErrorLog.Fatalln(err)
 	}
 }
