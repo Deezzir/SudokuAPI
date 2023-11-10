@@ -139,41 +139,36 @@ func fillRemaining(board *[9][9]int, rng *rand.Rand) bool {
 }
 
 func makeHoles(board *[9][9]int, difficulty string, rng *rand.Rand) {
-	attempts := 0
+	var totalHoles int
 
 	switch difficulty {
 	case "easy":
-		attempts = 3
+		totalHoles = 25
 	case "medium":
-		attempts = 5
+		totalHoles = 40
 	case "hard":
-		attempts = 7
+		totalHoles = 50
 	}
 
-	for attempts > 0 {
-		backup := 0
-		row := 0
-		col := 0
+	holesCreated := 0
+	for holesCreated < totalHoles {
+		row := rng.Intn(gridSize)
+		col := rng.Intn(gridSize)
 
-		for {
-			row = rng.Intn(gridSize)
-			col = rng.Intn(gridSize)
+		if board[row][col] != 0 {
+			backup := board[row][col]
+			board[row][col] = 0
+			holesCreated++
 
-			if board[row][col] != 0 {
-				backup = board[row][col]
-				board[row][col] = 0
-				break
+			var copyBoard [9][9]int
+			copy(copyBoard[:], board[:])
+			counter := 0
+			solver(&copyBoard, &counter)
+
+			if counter != 1 {
+				board[row][col] = backup
+				holesCreated--
 			}
-		}
-
-		var copyBoard [9][9]int
-		copy(copyBoard[:], board[:])
-		counter := 0
-		solver(&copyBoard, &counter)
-
-		if counter != 1 {
-			board[row][col] = backup
-			attempts--
 		}
 	}
 }
