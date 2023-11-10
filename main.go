@@ -150,7 +150,11 @@ func main() {
 
 	r := mux.NewRouter()
 	registerAPIRoutes(r)
-	handler := cors.Default().Handler(r)
+	handler := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET"},
+		AllowedHeaders: []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-API-Key"},
+	}).Handler(r)
 	securityMiddleware := apiKeyMiddleware(apiKey, handler)
 
 	utils.InfoLog.Println("Starting server at: " + server_port)
