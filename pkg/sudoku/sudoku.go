@@ -167,7 +167,7 @@ func makeHoles(board *[9][9]int, difficulty string, totalAttempts int, rng *rand
 			var copyBoard [9][9]int
 			copy(copyBoard[:], board[:])
 			counter := 0
-			solver(&copyBoard, &counter)
+			solver(&copyBoard, &counter, nil)
 
 			if counter != 1 {
 				board[row][col] = backup
@@ -272,10 +272,11 @@ func isValidPlacement(board *[9][9]int, row int, col int, number int) bool {
 	return isValidBox(board, row, col, number) && isValidRow(board, row, number) && isValidCol(board, col, number)
 }
 
-func SolveBoard(board string) (string, int) {
-	solution := convertBoardArray(board)
+func SolveBoard(boardStr string) (string, int) {
+	board := convertBoardArray(boardStr)
+	var solution [9][9]int
 	counter := 0
-	solver(&solution, &counter)
+	solver(&board, &counter, &solution)
 	utils.InfoLog.Printf("Solutions found: %d\n", counter)
 	return convertBoardString(solution), counter
 }
@@ -290,14 +291,14 @@ func CounterToMsg(counter int) string {
 	}
 }
 
-func solver(board *[9][9]int, counter *int) {
+func solver(board *[9][9]int, counter *int, solution *[9][9]int) {
 	for row := 0; row < gridSize; row++ {
 		for col := 0; col < gridSize; col++ {
 			if board[row][col] == 0 {
 				for i := 1; i <= gridSize; i++ {
 					if isValidPlacement(board, row, col, i) {
 						board[row][col] = i
-						solver(board, counter)
+						solver(board, counter, solution)
 						board[row][col] = 0
 					}
 				}
@@ -308,5 +309,8 @@ func solver(board *[9][9]int, counter *int) {
 
 	if checkIfFull(board) {
 		*counter++
+		if *counter == 1 && solution != nil {
+			copy(solution[:], board[:])
+		}
 	}
 }
